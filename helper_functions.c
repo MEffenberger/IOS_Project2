@@ -155,44 +155,26 @@ void sharemem_init(){
     }
 
     *queue3_counter = 0;
-
 }
-
 
 /**
  * @brief Funkce pro inicializaci semaforů
  */
-void semaphore_init(){
+void semaphore_init()
+{
 
-    mutex = NULL;
-    officer_available = NULL;
-    queue1 = NULL;
-    queue2 = NULL;
-    queue3 = NULL;
-    closed = NULL;
+    queues_mutex = sem_open(SEM_QUEUES_MUTEX, O_CREAT | O_EXCL, 0666, 1);
+
+    if (queues_mutex == SEM_FAILED){
+        error_message(5);
+        destroyer();
+        fclose(file);
+        exit(1);
+    }
 
     mutex = sem_open(SEM_MUTEX, O_CREAT | O_EXCL, 0666, 1);
 
     if (mutex == SEM_FAILED){
-        error_message(5);
-        destroyer();
-        fclose(file);
-        exit(1);
-    }
-
-
-    officer_available = sem_open(SEM_OFFICER_AVAILABLE, O_CREAT | O_EXCL, 0666, 0);
-
-    if (officer_available == SEM_FAILED){
-        error_message(5);
-        destroyer();
-        fclose(file);
-        exit(1);
-    }
-
-    customer_available = sem_open(SEM_CUSTOMER_AVAILABLE, O_CREAT | O_EXCL, 0666, 0);
-
-    if (customer_available == SEM_FAILED){
         error_message(5);
         destroyer();
         fclose(file);
@@ -235,19 +217,10 @@ void semaphore_init(){
         exit(1);
     }
 
-    queues_mutex = sem_open(QUEUES_MUTEX, O_CREAT | O_EXCL, 0666, 1);
+    memory = sem_open(SEM_MEMORY, O_CREAT | O_EXCL, 0666, 1);
 
-    if (queues_mutex == SEM_FAILED){
-        error_message(5);
-        destroyer();
-        fclose(file);
-        exit(1);
-    }
-
-    choosing_queue = sem_open(SEM_CHOOSING_QUEUE, O_CREAT | O_EXCL, 0666, 1);
-
-    if (choosing_queue == SEM_FAILED){
-        error_message(5);
+    if (memory == SEM_FAILED){
+        error_message(6);
         destroyer();
         fclose(file);
         exit(1);
@@ -258,13 +231,11 @@ void semaphore_init(){
 /**
  * @brief Funkce uvolňující všechny semafory a sdílenou paměť
  */
-void destroyer(){
+void destroyer()
+{
 
     sem_unlink(SEM_MUTEX);
     sem_close(mutex);
-
-    sem_unlink(SEM_OFFICER_AVAILABLE);
-    sem_close(officer_available);
 
     sem_unlink(SEM_QUEUE1);
     sem_close(queue1);
@@ -278,14 +249,12 @@ void destroyer(){
     sem_unlink(SEM_CLOSED);
     sem_close(closed);
 
-    sem_unlink(QUEUES_MUTEX);
+    sem_unlink(SEM_MEMORY);
+    sem_close(memory);
+
+    sem_unlink(SEM_QUEUES_MUTEX);
     sem_close(queues_mutex);
 
-    sem_unlink(SEM_CUSTOMER_AVAILABLE);
-    sem_close(customer_available);
-
-    sem_unlink(SEM_CHOOSING_QUEUE);
-    sem_close(choosing_queue);
 
     munmap(closed_flag, sizeof *closed_flag);
     munmap(process_counter, sizeof *process_counter);
@@ -305,7 +274,8 @@ void my_print(int action, int id, int queue, char identifier, char *name){
 
     sem_wait(mutex);
     (*process_counter)++;
-    switch (action){
+    switch (action)
+    {
         case 1:
             fprintf(file, "%d: %c %d: %s\n", *process_counter, identifier, id, name);
             break;
@@ -320,12 +290,12 @@ void my_print(int action, int id, int queue, char identifier, char *name){
     sem_post(mutex);
 }
 
-void going_home(int customer_id, char identifier){
-    if (*closed_flag == 1){
+void going_home(int customer_id, char identifier)
+{
+    if (*closed_flag == 1)
+    {
         my_print(1, customer_id, 0, identifier, "going home");
-        (*customers_counter)++;
         sem_post(closed);
-        //fclose(file);
         destroyer();
         exit(0);
     }

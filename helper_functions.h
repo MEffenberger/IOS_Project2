@@ -21,24 +21,20 @@
 #include <stdbool.h>
 
 #define SEM_MUTEX "/xeffen00_mutex"
-#define SEM_OFFICER_AVAILABLE "/xeffen00_officer_available"
 #define SEM_QUEUE1 "/xeffen00_queue1"
 #define SEM_QUEUE2 "/xeffen00_queue2"
 #define SEM_QUEUE3 "/xeffen00_queue3"
 #define SEM_CLOSED "/xeffen00_closed"
-#define QUEUES_MUTEX "/xeffen00_queues_mutex"
-#define SEM_CUSTOMER_AVAILABLE "/xeffen00_customer_available"
-#define SEM_CHOOSING_QUEUE "/xeffen00_choosing_queue"
+#define SEM_MEMORY "/xeffen00_memory"
+#define SEM_QUEUES_MUTEX "/xeffen00_queues_mutex"
 
 sem_t *mutex;
-sem_t *officer_available;
-sem_t *customer_available;
 sem_t *queue1;
 sem_t *queue2;
 sem_t *queue3;
 sem_t *closed;
+sem_t *memory;
 sem_t *queues_mutex;
-sem_t *choosing_queue;
 
 int *process_counter;
 int *officer_counter;
