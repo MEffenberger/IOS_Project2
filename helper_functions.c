@@ -22,6 +22,7 @@ int random_number(int x) {
 
 bool are_queues_empty() {
 
+    sem_wait(queues_mutex);
     if (*queue1_counter == 0 && *queue2_counter == 0 && *queue3_counter == 0) {
         sem_post(queues_mutex);
         return true;
@@ -296,7 +297,7 @@ void destroyer(){
     munmap(queue2_counter, sizeof *queue2_counter);
     munmap(queue3_counter, sizeof *queue3_counter);
 
-
+    fclose(file);
 
 }
 
@@ -324,6 +325,8 @@ void going_home(int customer_id, char identifier){
         my_print(1, customer_id, 0, identifier, "going home");
         (*customers_counter)++;
         sem_post(closed);
+        //fclose(file);
+        destroyer();
         exit(0);
     }
 }

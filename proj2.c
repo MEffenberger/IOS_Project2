@@ -4,13 +4,12 @@
 
 void customer(int customer_id, int waiting_time){
 
-    char identifier = 'Z';
 
     my_print(1, customer_id, 0, 'Z', "started");
     waiting_generator(waiting_time);
 
     sem_wait(closed);
-    going_home(customer_id, identifier);
+    going_home(customer_id, 'Z');
     sem_post(closed);
 
     int queue = random_1_to_3();
@@ -19,82 +18,81 @@ void customer(int customer_id, int waiting_time){
         case 1:
 
             sem_wait(closed);
-            going_home(customer_id, identifier);
+            going_home(customer_id, 'Z');
             sem_post(closed);
 
-            my_print(2, customer_id, queue, identifier, "entering office for a service");
+            my_print(2, customer_id, queue, 'Z', "entering office for a service");
             sem_wait(queues_mutex);
             (*queue1_counter)++;
-            sem_post(queue1);
             sem_post(queues_mutex);
+            sem_post(queue1);
 
             sem_wait(officer_available);
-            my_print(1, customer_id, 0, identifier, "called by office worker");
+            my_print(1, customer_id, 0, 'Z', "called by office worker");
             waiting_generator(10);
 
             sem_wait(queues_mutex);
             (*queue1_counter)--;
             sem_post(queues_mutex);
-            sem_post(officer_available);
-
-            my_print(1, customer_id, 0, identifier, "going home");
-            (*customers_counter)++;
 
 
+            my_print(1, customer_id, 0, 'Z', "going home");
+            //sem_post(officer_available);
+            //fclose(file);
+            destroyer();
             exit(0);
 
         case 2:
 
             sem_wait(closed);
-            going_home(customer_id, identifier);
+            going_home(customer_id, 'Z');
             sem_post(closed);
 
-            my_print(2, customer_id, queue, identifier, "entering office for a service");
+            my_print(2, customer_id, queue, 'Z', "entering office for a service");
             sem_wait(queues_mutex);
             (*queue2_counter)++;
-            sem_post(queue2);
             sem_post(queues_mutex);
+            sem_post(queue2);
 
             sem_wait(officer_available);
-            my_print(1, customer_id, 0, identifier, "called by office worker");
+            my_print(1, customer_id, 0, 'Z', "called by office worker");
             waiting_generator(10);
 
             sem_wait(queues_mutex);
             (*queue2_counter)--;
             sem_post(queues_mutex);
-            sem_post(officer_available);
-
-            my_print(1, customer_id, 0, identifier, "going home");
-            (*customers_counter)++;
 
 
-
+            my_print(1, customer_id, 0, 'Z', "going home");
+            //sem_post(queue2);
+            //fclose(file);
+            destroyer();
             exit(0);
 
         case 3:
 
             sem_wait(closed);
-            going_home(customer_id, identifier);
+            going_home(customer_id, 'Z');
             sem_post(closed);
 
-            my_print(2, customer_id, queue, identifier, "entering office for a service");
+            my_print(2, customer_id, queue, 'Z', "entering office for a service");
             sem_wait(queues_mutex);
             (*queue3_counter)++;
-            sem_post(queue3);
             sem_post(queues_mutex);
+            sem_post(queue3);
 
             sem_wait(officer_available);
-            my_print(1, customer_id, 0, identifier, "called by office worker");
+            my_print(1, customer_id, 0, 'Z', "called by office worker");
             waiting_generator(10);
 
             sem_wait(queues_mutex);
             (*queue3_counter)--;
             sem_post(queues_mutex);
-            sem_post(officer_available);
 
-            my_print(1, customer_id, 0, identifier, "going home");
-            (*customers_counter)++;
-
+            my_print(1, customer_id, 0, 'Z', "going home");
+            //sem_post(queue3);
+            //fclose(file);
+            destroyer();
             exit(0);
 
     }
@@ -104,24 +102,27 @@ void customer(int customer_id, int waiting_time){
 
 void officer(int officer_id, int break_time) {
 
-    char identifier = 'U';
+
     my_print(1, officer_id, 0, 'U', "started");
 
 
     while(1) {
 
-        if (*closed_flag == 1 && are_queues_empty()) {
+        if (*closed_flag == 1) {
 
-            sem_wait(closed);
-            sem_wait(queues_mutex);
-            going_home(officer_id, identifier);
-            sem_post(closed);
-            waiting_generator(break_time);
-            exit(0);
+            if(are_queues_empty()){
 
+            going_home(officer_id, 'U');
+            //fclose(file);
+
+            }
         } else if (*queue1_counter > 0) {
                 sem_wait(queue1);
-                (*queue1_counter)--;
+
+//                sem_wait(queues_mutex);
+//                (*queue1_counter)--;
+//                sem_post(queues_mutex);
+
                 my_print(2, officer_id, 1, 'U', "serving a service of type");
                 sem_post(officer_available);
                 waiting_generator(10);
@@ -129,7 +130,11 @@ void officer(int officer_id, int break_time) {
 
         } else if (*queue2_counter > 0) {
                 sem_wait(queue2);
-                (*queue2_counter)--;
+
+//                sem_wait(queues_mutex);
+//                (*queue2_counter)--;
+//                sem_post(queues_mutex);
+
                 my_print(2, officer_id, 2, 'U', "serving a service of type");
                 sem_post(officer_available);
                 waiting_generator(10);
@@ -137,7 +142,11 @@ void officer(int officer_id, int break_time) {
 
         } else if (*queue3_counter > 0) {
                 sem_wait(queue3);
-                (*queue3_counter)--;
+
+//                sem_wait(queues_mutex);
+//                (*queue3_counter)--;
+//                sem_post(queues_mutex);
+
                 my_print(2, officer_id, 3, 'U', "serving a service of type");
                 sem_post(officer_available);
                 waiting_generator(10);
@@ -147,6 +156,7 @@ void officer(int officer_id, int break_time) {
             my_print(1, officer_id, 0, 'U', "taking a break");
             waiting_generator(break_time);
             my_print(1, officer_id, 0, 'U', "break finished");
+           // fprintf(file, "%d %d %d", *queue1_counter, *queue2_counter, *queue3_counter);
         }
     }
 }
@@ -242,6 +252,7 @@ int main(int argc, char *argv[]) {
             exit(0);
         } else if (pid == -1) {
             error_message(4);
+            destroyer();
             return 1;
         }
     }
@@ -254,10 +265,12 @@ int main(int argc, char *argv[]) {
             exit(0);
         } else if (pid == -1) {
             error_message(4);
+            destroyer();
             return 1;
         }
     }
 
+    //wait until all child processes are created
 
 
     usleep(random_number(ClosedTime) * 1000);
