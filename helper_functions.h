@@ -73,6 +73,5 @@ int random_1_to_3();
 void my_print(int action, int id, int queue, char identifier, char *name);
 int random_number(int x);
 void going_home(int customer_id, char identifier);
-int choose_nonempty_queue();
 
 #endif //IOS_PROJECT2_HELPER_FUNCTIONS_H

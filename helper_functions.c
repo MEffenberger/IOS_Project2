@@ -316,32 +316,3 @@ void going_home(int customer_id, char identifier){
     }
 }
 
-int choose_nonempty_queue(){
-
-        int queue = 0;
-        int random = 0;
-
-        sem_wait(choosing_queue);
-
-        if (*queue1_counter == 0 && *queue2_counter == 0 && *queue3_counter == 0){
-            sem_post(choosing_queue);
-            return 0;
-        }
-
-        random = rand() % 3;
-
-        if (random == 0 && *queue1_counter != 0){
-            queue = 1;
-        } else if (random == 1 && *queue2_counter != 0){
-            queue = 2;
-        } else if (random == 2 && *queue3_counter != 0){
-            queue = 3;
-        } else {
-            sem_post(choosing_queue);
-            return 0;
-        }
-
-        sem_post(choosing_queue);
-
-        return queue;
-}

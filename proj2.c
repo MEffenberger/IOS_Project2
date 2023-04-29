@@ -9,9 +9,9 @@ void customer(int customer_id, int waiting_time){
     my_print(1, customer_id, 0, 'Z', "started");
     waiting_generator(waiting_time);
 
-//    sem_wait(closed);
-//    going_home(customer_id, identifier);
-//    sem_post(closed);
+    sem_wait(closed);
+    going_home(customer_id, identifier);
+    sem_post(closed);
 
     int queue = random_1_to_3();
     switch(queue){
@@ -27,7 +27,12 @@ void customer(int customer_id, int waiting_time){
             (*queue1_counter)++;
             sem_post(queue1);
             sem_post(queues_mutex);
-            break;
+
+            sem_wait(officer_available);
+            my_print(1, customer_id, 0, identifier, "called by office worker");
+            waiting_generator(10);
+
+            exit(0);
 
         case 2:
 
@@ -40,7 +45,12 @@ void customer(int customer_id, int waiting_time){
             (*queue2_counter)++;
             sem_post(queue2);
             sem_post(queues_mutex);
-            break;
+
+            sem_wait(officer_available);
+            my_print(1, customer_id, 0, identifier, "called by office worker");
+            waiting_generator(10);
+
+            exit(0);
 
         case 3:
 
@@ -53,24 +63,14 @@ void customer(int customer_id, int waiting_time){
             (*queue3_counter)++;
             sem_post(queue3);
             sem_post(queues_mutex);
-            break;
+
+            sem_wait(officer_available);
+            my_print(1, customer_id, 0, identifier, "called by office worker");
+            waiting_generator(10);
+
+            exit(0);
 
     }
-
-//    sem_post(customer_available);
-//    sem_wait(officer_available);
-
-   // my_print(1, customer_id, queue, identifier, "called by office worker");
-//
-   // waiting_generator(10);
-//
-    //my_print(1, customer_id, 0, identifier, "going home");
-
-   exit(0);
-
-
-
-
 
 }
 
@@ -97,24 +97,31 @@ void officer(int officer_id, int break_time) {
                 sem_wait(queue1);
                 (*queue1_counter)--;
                 my_print(2, officer_id, 1, 'U', "serving a service of type");
+                sem_post(officer_available);
                 waiting_generator(10);
                 my_print(1, officer_id, 0, 'U', "service finished");
+
         } else if (*queue2_counter > 0) {
                 sem_wait(queue2);
                 (*queue2_counter)--;
                 my_print(2, officer_id, 2, 'U', "serving a service of type");
+                sem_post(officer_available);
                 waiting_generator(10);
                 my_print(1, officer_id, 0, 'U', "service finished");
+
         } else if (*queue3_counter > 0) {
                 sem_wait(queue3);
                 (*queue3_counter)--;
                 my_print(2, officer_id, 3, 'U', "serving a service of type");
+                sem_post(officer_available);
                 waiting_generator(10);
                 my_print(1, officer_id, 0, 'U', "service finished");
+        } else {
+
+            my_print(1, officer_id, 0, 'U', "taking a break");
+            waiting_generator(break_time);
+            my_print(1, officer_id, 0, 'U', "break finished");
         }
-
-
-
     }
 }
 
