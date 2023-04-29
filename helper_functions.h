@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <time.h>
+#include <stdbool.h>
 
 #define SEM_MUTEX "/xeffen00_mutex"
 #define SEM_OFFICER_AVAILABLE "/xeffen00_officer_available"
@@ -73,5 +74,6 @@ int random_1_to_3();
 void my_print(int action, int id, int queue, char identifier, char *name);
 int random_number(int x);
 void going_home(int customer_id, char identifier);
+bool are_queues_empty();
 
 #endif //IOS_PROJECT2_HELPER_FUNCTIONS_H

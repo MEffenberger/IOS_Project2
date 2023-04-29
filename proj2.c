@@ -32,6 +32,15 @@ void customer(int customer_id, int waiting_time){
             my_print(1, customer_id, 0, identifier, "called by office worker");
             waiting_generator(10);
 
+            sem_wait(queues_mutex);
+            (*queue1_counter)--;
+            sem_post(queues_mutex);
+            sem_post(officer_available);
+
+            my_print(1, customer_id, 0, identifier, "going home");
+            (*customers_counter)++;
+
+
             exit(0);
 
         case 2:
@@ -49,6 +58,16 @@ void customer(int customer_id, int waiting_time){
             sem_wait(officer_available);
             my_print(1, customer_id, 0, identifier, "called by office worker");
             waiting_generator(10);
+
+            sem_wait(queues_mutex);
+            (*queue2_counter)--;
+            sem_post(queues_mutex);
+            sem_post(officer_available);
+
+            my_print(1, customer_id, 0, identifier, "going home");
+            (*customers_counter)++;
+
+
 
             exit(0);
 
@@ -68,6 +87,14 @@ void customer(int customer_id, int waiting_time){
             my_print(1, customer_id, 0, identifier, "called by office worker");
             waiting_generator(10);
 
+            sem_wait(queues_mutex);
+            (*queue3_counter)--;
+            sem_post(queues_mutex);
+            sem_post(officer_available);
+
+            my_print(1, customer_id, 0, identifier, "going home");
+            (*customers_counter)++;
+
             exit(0);
 
     }
@@ -80,14 +107,13 @@ void officer(int officer_id, int break_time) {
     char identifier = 'U';
     my_print(1, officer_id, 0, 'U', "started");
 
-//    (*officer_counter)++;
-
 
     while(1) {
 
-        if (*closed_flag == 1 && *queue1_counter == 0 && *queue2_counter == 0 && *queue3_counter == 0) {
+        if (*closed_flag == 1 && are_queues_empty()) {
 
             sem_wait(closed);
+            sem_wait(queues_mutex);
             going_home(officer_id, identifier);
             sem_post(closed);
             waiting_generator(break_time);

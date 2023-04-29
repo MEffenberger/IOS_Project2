@@ -15,9 +15,21 @@ int random_1_to_3() {
 }
 
 int random_number(int x) {
-    srand(time(NULL) * getpid()); // Seed the random number generator with the current time
-    int result = rand() % ((x+1) - (x/2)) + (x/2); // Generate a random integer between x/2 and x
+    srand(time(NULL) * getpid());
+    int result = rand() % ((x+1) - (x/2)) + (x/2);
     return result;
+}
+
+bool are_queues_empty() {
+
+    if (*queue1_counter == 0 && *queue2_counter == 0 && *queue3_counter == 0) {
+        sem_post(queues_mutex);
+        return true;
+
+    }
+    sem_post(queues_mutex);
+    return false;
+
 }
 
 /**
