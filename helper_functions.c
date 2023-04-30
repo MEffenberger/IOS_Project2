@@ -18,7 +18,7 @@
 #include "helper_functions.h"
 
 /**
- * @brief Function for shared usage_mutex initialization
+ * @brief Function for shared memory initialization
  */
 void sharemem_init()
 {
@@ -129,7 +129,7 @@ void semaphore_init()
 
 
 /**
- * @brief Function for semaphore destruction, shared usage_mutex unmap and file close
+ * @brief Function for semaphore destruction, shared memory unmap and file close
  */
 void destroyer()
 {
@@ -215,7 +215,7 @@ void error_message(int num)
             fprintf(stderr, "Error: Error creating semaphore!\n");
             break;
         case 6:
-            fprintf(stderr, "Error: Error opening shared usage_mutex!\n");
+            fprintf(stderr, "Error: Error opening shared memory!\n");
             break;
         case 7:
             fprintf(stderr, "Error: Error creating child process!\n");
