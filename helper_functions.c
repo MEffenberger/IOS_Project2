@@ -1,7 +1,24 @@
+/**************************************************************
+ *
+ * Name of the Project: IOS Project 2, Process Synchronization
+ * File: helper_functions.c
+ * Created by: Marek Effenberger (xeffen00)
+ * Description: This file contains all the additional functions
+ *
+ * ***********************************************************/
+
+/**************************************************************
+ *
+ * @file helper_functions.c
+ * @brief This file contains all the additional functions
+ * @author Marek Effenberger
+ *
+ * ***********************************************************/
+
 #include "helper_functions.h"
 
 /**
- * @brief Function for shared memory initialization
+ * @brief Function for shared usage_mutex initialization
  */
 void sharemem_init()
 {
@@ -11,7 +28,6 @@ void sharemem_init()
     if (process_counter == MAP_FAILED){
         error_message(6);
         destroyer();
-        fclose(file);
         exit(1);
     }
     *process_counter = 0;
@@ -21,7 +37,6 @@ void sharemem_init()
     if (closed_flag == MAP_FAILED){
         error_message(6);
         destroyer();
-        fclose(file);
         exit(1);
     }
     *closed_flag = 0;
@@ -31,7 +46,6 @@ void sharemem_init()
     if (queue1_counter == MAP_FAILED){
         error_message(6);
         destroyer();
-        fclose(file);
         exit(1);
     }
 
@@ -42,7 +56,6 @@ void sharemem_init()
     if (queue2_counter == MAP_FAILED){
         error_message(6);
         destroyer();
-        fclose(file);
         exit(1);
     }
 
@@ -53,7 +66,6 @@ void sharemem_init()
     if (queue3_counter == MAP_FAILED){
         error_message(6);
         destroyer();
-        fclose(file);
         exit(1);
     }
 
@@ -66,12 +78,11 @@ void sharemem_init()
 void semaphore_init()
 {
 
-    mutex = sem_open(SEM_MUTEX, O_CREAT | O_EXCL, 0666, 1);
+    print_mutex = sem_open(SEM_PRINT_MUTEX, O_CREAT | O_EXCL, 0666, 1);
 
-    if (mutex == SEM_FAILED){
+    if (print_mutex == SEM_FAILED){
         error_message(5);
         destroyer();
-        fclose(file);
         exit(1);
     }
 
@@ -80,7 +91,6 @@ void semaphore_init()
     if (queue1 == SEM_FAILED){
         error_message(5);
         destroyer();
-        fclose(file);
         exit(1);
     }
 
@@ -89,7 +99,6 @@ void semaphore_init()
     if (queue2 == SEM_FAILED){
         error_message(5);
         destroyer();
-        fclose(file);
         exit(1);
     }
 
@@ -98,7 +107,6 @@ void semaphore_init()
     if (queue3 == SEM_FAILED){
         error_message(5);
         destroyer();
-        fclose(file);
         exit(1);
     }
 
@@ -107,29 +115,27 @@ void semaphore_init()
     if (closed == SEM_FAILED){
         error_message(5);
         destroyer();
-        fclose(file);
         exit(1);
     }
 
-    memory = sem_open(SEM_MEMORY, O_CREAT | O_EXCL, 0666, 1);
+    usage_mutex = sem_open(SEM_USAGE_MUTEX, O_CREAT | O_EXCL, 0666, 1);
 
-    if (memory == SEM_FAILED){
+    if (usage_mutex == SEM_FAILED){
         error_message(6);
         destroyer();
-        fclose(file);
         exit(1);
     }
 }
 
 
 /**
- * @brief Function for semaphore destruction, shared memory unmap and file close
+ * @brief Function for semaphore destruction, shared usage_mutex unmap and file close
  */
 void destroyer()
 {
 
-    sem_unlink(SEM_MUTEX);
-    sem_close(mutex);
+    sem_unlink(SEM_PRINT_MUTEX);
+    sem_close(print_mutex);
 
     sem_unlink(SEM_QUEUE1);
     sem_close(queue1);
@@ -143,8 +149,8 @@ void destroyer()
     sem_unlink(SEM_CLOSED);
     sem_close(closed);
 
-    sem_unlink(SEM_MEMORY);
-    sem_close(memory);
+    sem_unlink(SEM_USAGE_MUTEX);
+    sem_close(usage_mutex);
 
 
 
@@ -168,7 +174,7 @@ void destroyer()
  */
 void my_print(int action, int id, int queue, char identifier, char *name)
 {
-    sem_wait(mutex);
+    sem_wait(print_mutex);
     (*process_counter)++;
     switch (action)
     {
@@ -183,7 +189,7 @@ void my_print(int action, int id, int queue, char identifier, char *name)
             break;
     }
     fflush(file);
-    sem_post(mutex);
+    sem_post(print_mutex);
 }
 
 /**
@@ -194,25 +200,25 @@ void error_message(int num)
 {
     switch(num){
         case 1:
-            fprintf(stderr, "Error: Wrong number of arguments");
+            fprintf(stderr, "Error: Wrong number of arguments!\n");
             break;
         case 2:
-            fprintf(stderr, "Error: Wrong argument format");
+            fprintf(stderr, "Error: Wrong argument format!\n");
             break;
         case 3:
-            fprintf(stderr, "Error: Argument value out of range");
+            fprintf(stderr, "Error: Argument value out of range!\n");
             break;
         case 4:
-            fprintf(stderr, "Error: Error opening file");
+            fprintf(stderr, "Error: Error opening file!\n");
             break;
         case 5:
-            fprintf(stderr, "Error: Error creating semaphore");
+            fprintf(stderr, "Error: Error creating semaphore!\n");
             break;
         case 6:
-            fprintf(stderr, "Error: Error opening shared memory");
+            fprintf(stderr, "Error: Error opening shared usage_mutex!\n");
             break;
         case 7:
-            fprintf(stderr, "Error: Error creating child process");
+            fprintf(stderr, "Error: Error creating child process!\n");
             break;
     }
 }
@@ -261,5 +267,22 @@ void going_home(int customer_id, char identifier)
         destroyer();
         exit(0);
     }
+}
+
+/**
+ * @brief Function for choosing a non-empty queue for the officer to serve in
+ * @return Number of the queue
+ */
+int choose_nonempty_queue() {
+
+    srand(time(NULL) * getpid());
+    int queues[3] = {*queue1_counter, *queue2_counter, *queue3_counter};
+
+    int random_index;
+    do {
+        random_index = rand() % 3;
+    } while (queues[random_index] == 0);
+
+    return random_index + 1;
 }
 

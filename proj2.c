@@ -1,5 +1,22 @@
-#include "helper_functions.h"
+/**************************************************************
+ *
+ * Name of the Project: IOS Project 2, Process Synchronization
+ * File: proj2.c
+ * Created by: Marek Effenberger (xeffen00)
+ * Description: This file contains the main logic of the project,
+ *              handling of the input and output
+ *
+ * ***********************************************************/
 
+/**************************************************************
+ *
+ * @file proj2.c
+ * @brief Main logic of the project
+ * @author Marek Effenberger
+ *
+ * ***********************************************************/
+
+#include "helper_functions.h"
 
 /**
  * Customer Function
@@ -17,8 +34,8 @@ void customer(int customer_id, int waiting_time){
     my_print(1, customer_id, 0, 'Z', "started");
     waiting_generator(waiting_time);
 
-    //locking the memory for a specific task of a customer
-    sem_wait(memory);
+    //locking the usage_mutex for a specific task of a customer
+    sem_wait(usage_mutex);
 
     if(*closed_flag == 0)
     {
@@ -32,7 +49,8 @@ void customer(int customer_id, int waiting_time){
             //incrementing the queue counter so the officer knows how many people are waiting
             (*queue1_counter)++;
             my_print(2, customer_id, queue, 'Z', "entering office for a service");
-            sem_post(memory);
+            //unlocking the usage_mutex so the others can proceed
+            sem_post(usage_mutex);
 
             //signalling the officer that the customer is waiting
             sem_wait(queue1);
@@ -51,7 +69,7 @@ void customer(int customer_id, int waiting_time){
             sem_post(closed);
             (*queue2_counter)++;
             my_print(2, customer_id, queue, 'Z', "entering office for a service");
-            sem_post(memory);
+            sem_post(usage_mutex);
 
             sem_wait(queue2);
 
@@ -69,7 +87,7 @@ void customer(int customer_id, int waiting_time){
             sem_post(closed);
             (*queue3_counter)++;
             my_print(2, customer_id, queue, 'Z', "entering office for a service");
-            sem_post(memory);
+            sem_post(usage_mutex);
 
             sem_wait(queue3);
 
@@ -84,7 +102,7 @@ void customer(int customer_id, int waiting_time){
     }
     else
     {
-    sem_post(memory);
+    sem_post(usage_mutex);
     }
     //going home if the office is closed
     my_print(1, customer_id, 0, 'Z', "going home");
@@ -106,61 +124,68 @@ void officer(int officer_id, int break_time) {
 
     for(;;)
     {
-        //locking memory for a specific task of an officer
-        sem_wait(memory);
+        //locking usage_mutex for a specific task of an officer
+        sem_wait(usage_mutex);
         if (*closed_flag == 1 && *queue1_counter == 0 && *queue2_counter == 0 && *queue3_counter == 0)
         {
             //breaking of the cycle if all customers are served, going home
             break;
         }
         //if there is a customer in a queue, the officer serves him, waits and then the cycle continues
-        else if (*queue1_counter > 0)
-        {
+        else if (*queue1_counter > 0 || *queue2_counter > 0 || *queue3_counter > 0){
+
+            //choosing a nonempty random queue to serve
+            int queue_to_serve = choose_nonempty_queue();
+            if (queue_to_serve == 1)
+            {
+                //decrementing the queue counter so the officer knows how many people are waiting
                 (*queue1_counter)--;
                 my_print(2, officer_id, 1, 'U', "serving a service of type");
-                sem_post(memory);
-                //signalling the customer that he can come in
+                //unlocking the usage_mutex so the others can proceed
+                sem_post(usage_mutex);
+                //signalling the customer that he is being served
                 sem_post(queue1);
-                //taking a random time to serve the customer before he finishes
+
                 waiting_generator(10);
 
                 my_print(1, officer_id, 0, 'U', "service finished");
 
-        } else if (*queue2_counter > 0)
-        {
+            } else if (queue_to_serve == 2)
+            {
                 (*queue2_counter)--;
                 my_print(2, officer_id, 2, 'U', "serving a service of type");
-                sem_post(memory);
+                sem_post(usage_mutex);
                 sem_post(queue2);
 
                 waiting_generator(10);
 
                 my_print(1, officer_id, 0, 'U', "service finished");
 
-        } else if (*queue3_counter > 0)
-        {
-                 (*queue3_counter)--;
+            } else if (queue_to_serve == 3)
+            {
+                (*queue3_counter)--;
                 my_print(2, officer_id, 3, 'U', "serving a service of type");
-                sem_post(memory);
+                sem_post(usage_mutex);
                 sem_post(queue3);
 
                 waiting_generator(10);
 
                 my_print(1, officer_id, 0, 'U', "service finished");
 
+            }
 
         } else
         {
             // in every other instance (while the post is open) the officer takes a break
             my_print(1, officer_id, 0, 'U', "taking break");
-            sem_post(memory);
+            sem_post(usage_mutex);
             waiting_generator(break_time);
 
             my_print(1, officer_id, 0, 'U', "break finished");
         }
     }
     //going home
-    sem_post(memory);
+    sem_post(usage_mutex);
     my_print(1, officer_id, 0, 'U', "going home");
     destroyer();
     exit(0);
@@ -181,25 +206,29 @@ int main(int argc, char *argv[]) {
 
 //-------------------- Argument parsing and error handling ----------------------//
 
-    sem_unlink(SEM_MUTEX);
+    sem_unlink(SEM_PRINT_MUTEX);
     sem_unlink(SEM_QUEUE1);
     sem_unlink(SEM_QUEUE2);
     sem_unlink(SEM_QUEUE3);
     sem_unlink(SEM_CLOSED);
-    sem_unlink(SEM_MEMORY);
+    sem_unlink(SEM_USAGE_MUTEX);
 
+    //opening the file for writing
     if ((file = fopen("proj2.out", "w")) == NULL)
     {
         error_message(4);
         return 1;
     }
 
+    //checking if the number of arguments is correct
     if (argc != 6)
     {
         error_message(1);
+        fclose(file);
         return 1;
     }
 
+    //checking if the arguments are numbers
     for (int i = 1; i < argc; i++)
     {
         for (unsigned long int j = 0; j < strlen(argv[i]); j++)
@@ -207,15 +236,20 @@ int main(int argc, char *argv[]) {
             if (argv[i][j] < '0' || argv[i][j] > '9')
             {
                 error_message(2);
+                fclose(file);
                 return 1;
             }
         }
     }
 
+    ///////////////////////////////////////////////////////////////////
+    // loading the data into variables and checking the restrictions //
+    ///////////////////////////////////////////////////////////////////
     int CustomersNum = atoi(argv[1]);
     if (CustomersNum < 0)
     {
         error_message(3);
+        fclose(file);
         return 1;
     }
 
@@ -223,6 +257,7 @@ int main(int argc, char *argv[]) {
     if (OfficersNum <= 0)
     {
         error_message(3);
+        fclose(file);
         return 1;
     }
 
@@ -230,6 +265,7 @@ int main(int argc, char *argv[]) {
     if (WaitingTime < 0 || WaitingTime > 10000)
     {
         error_message(3);
+        fclose(file);
         return 1;
     }
 
@@ -237,6 +273,7 @@ int main(int argc, char *argv[]) {
     if (BreakTime < 0 || BreakTime > 100)
     {
         error_message(3);
+        fclose(file);
         return 1;
     }
 
@@ -244,12 +281,13 @@ int main(int argc, char *argv[]) {
     if (ClosedTime < 0 || ClosedTime > 10000)
     {
         error_message(3);
+        fclose(file);
         return 1;
     }
 
 //---------------------- Child processes creation and handling -------------------------//
 
-    //setting up stdout
+    //setting up stdout, so the output is not buffered
     setbuf(stdout, NULL);
 
     //initializing semaphores and shared memory
@@ -280,7 +318,6 @@ int main(int argc, char *argv[]) {
         pid_t pid = fork();
         if (pid == 0)
         {
-
             customer(customer_args_array[i].customer_id, customer_args_array[i].waiting_time);
             exit(0);
 
@@ -309,15 +346,15 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //called usleep in a range of <F/2,F> mutex lock needed for collision prevention, setting flag to 1
+    //called usleep in a range of <F/2,F> print_mutex lock needed for collision prevention, setting flag to 1
     usleep(closing_time(ClosedTime) * 1000);
-    sem_wait(memory);
+    sem_wait(usage_mutex);
     my_print(3, 0, 0, 0, "closing");
     (*closed_flag) = 1;
-    sem_post(memory);
+    sem_post(usage_mutex);
     sem_post(closed);
 
-    //waiting for all processes to finish, cleaning main afterwards
+    //waiting for all processes to finish, cleaning main afterward
     while(wait(NULL) > 0);
     destroyer();
     return 0;
