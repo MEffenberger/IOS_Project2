@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=gnu99 -Wall -Wextra -Werror -pthread
+CFLAGS = -std=gnu99 -Wall -Wextra -Werror -pedantic -pthread
 SRC = proj2.c helper_functions.c
 OBJ = $(SRC:.c=.o)
 TARGET = proj2

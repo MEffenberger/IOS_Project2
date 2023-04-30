@@ -1,10 +1,7 @@
-//
-// Created by marek on 27.04.2023.
-//
-
 #ifndef IOS_PROJECT2_HELPER_FUNCTIONS_H
 #define IOS_PROJECT2_HELPER_FUNCTIONS_H
 
+//Libraries
 #include <stdio.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -20,56 +17,52 @@
 #include <time.h>
 #include <stdbool.h>
 
+//Names of semaphores
 #define SEM_MUTEX "/xeffen00_mutex"
 #define SEM_QUEUE1 "/xeffen00_queue1"
 #define SEM_QUEUE2 "/xeffen00_queue2"
 #define SEM_QUEUE3 "/xeffen00_queue3"
 #define SEM_CLOSED "/xeffen00_closed"
 #define SEM_MEMORY "/xeffen00_memory"
-#define SEM_QUEUES_MUTEX "/xeffen00_queues_mutex"
 
+//Semaphore declarations
 sem_t *mutex;
 sem_t *queue1;
 sem_t *queue2;
 sem_t *queue3;
 sem_t *closed;
 sem_t *memory;
-sem_t *queues_mutex;
 
+//Shared memory declarations
 int *process_counter;
-int *officer_counter;
-int *customers_counter;
-int *customers_number;
-int *officers_number;
 int *closed_flag;
 int *queue1_counter;
 int *queue2_counter;
 int *queue3_counter;
 
+//File declaration
 FILE *file;
 
+//Structs of child processes
 struct customer_args{
-    //int state;
     int waiting_time;
     int customer_id;
 };
 
 struct officer_args{
-    //int state;
     int break_time;
     int officer_id;
 };
 
-
+//Helper functions declarations
 void error_message(int num);
 void sharemem_init();
 void semaphore_init();
 void destroyer();
 void waiting_generator(int waiting_time);
-int random_1_to_3();
+int queue_randomizer();
 void my_print(int action, int id, int queue, char identifier, char *name);
-int random_number(int x);
+int closing_time(int x);
 void going_home(int customer_id, char identifier);
-bool are_queues_empty();
 
 #endif //IOS_PROJECT2_HELPER_FUNCTIONS_H
